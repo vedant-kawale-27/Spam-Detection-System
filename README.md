@@ -1,3 +1,5 @@
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+
 # 🚀 Spam Detection System
 
 A full-stack application that detects **Spam / Smishing / Offensive content** using Machine Learning.
@@ -267,3 +269,13 @@ Aditya Sharma
 Feel free to fork, improve and contribute to this project!
 
 ---
+
+## 📜 License
+
+This project is open-source and available under the MIT License.
+
+You are free to use, modify, and distribute this project for personal or commercial use, provided that proper credit is given.
+
+For more details, see the [LICENSE](LICENSE) file.
+
+
