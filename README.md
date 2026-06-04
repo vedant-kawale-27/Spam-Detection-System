@@ -331,6 +331,16 @@ Feel free to fork, improve and contribute to this project!
 - [Docker](https://docs.docker.com/get-docker/) installed
 - [Docker Compose](https://docs.docker.com/compose/install/) installed
 
+### Docker Hub Images
+
+Pre-built images are available — no build step required:
+
+| Service | Docker Hub |
+|---|---|
+| Flask ML API | [rudra2006/spam-ml-api](https://hub.docker.com/r/rudra2006/spam-ml-api) |
+| Node.js Backend | [rudra2006/spam-node-backend](https://hub.docker.com/r/rudra2006/spam-node-backend) |
+| React Frontend | [rudra2006/spam-frontend](https://hub.docker.com/r/rudra2006/spam-frontend) |
+
 ### Quick Start
 
 Clone and run with a single command:
@@ -338,7 +348,7 @@ Clone and run with a single command:
 ```bash
 git clone https://github.com/Userunknown84/Spam-Detection-System.git
 cd Spam-Detection-System
-docker-compose up --build
+docker-compose up
 ```
 
 | Service | URL |
