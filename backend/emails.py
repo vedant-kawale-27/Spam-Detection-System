@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from database import (
+from backend.database import (
     insert_email,
     mark_email,
     get_spam_emails,
