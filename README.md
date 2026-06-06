@@ -28,6 +28,14 @@ Prediction (Spam / Ham / Offensive)
 ```
 
 ---
+## System Stability & Environment Fixes
+This update addresses critical runtime issues that prevented the system from executing in the local development environment:
+
+* **Security Policy Compliance:** Migrated the project to a directory with appropriate execution permissions to resolve `DLL load` errors.
+* **Model Loading Error:** Corrected file path references to ensure the ML models are properly detected at runtime.
+* **API Stability:** Fixed `500 Internal Server Error` by correctly serializing NumPy model outputs to JSON.
+
+For a detailed breakdown, please refer to the recently merged Pull Request.
 
 ## 🧠 Machine Learning Model
 
@@ -223,6 +231,52 @@ export default function App() {
   );
 }
 ```
+---
+
+## 🗄️ Email Classification Database
+
+A MySQL-based system to store and manage classified email records.
+
+### Database Setup
+
+```bash
+mysql -u root -p < backend/schema.sql
+```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/emails/` | Insert new email record |
+| PATCH | `/api/emails/{id}/mark` | Mark as spam or legitimate |
+| GET | `/api/emails/spam` | Retrieve all spam emails |
+| GET | `/api/emails/legitimate` | Retrieve all legitimate emails |
+| GET | `/api/emails/count/spam` | Count total spam emails |
+| GET | `/api/emails/count/legitimate` | Count total legitimate emails |
+
+### Export Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/emails/export?format=csv` | Download all emails as CSV |
+| GET | `/api/emails/export?format=pdf` | Download all emails as PDF report |
+
+### CSV Export Format
+email_id, subject, sender, is_spam, timestamp
+1, Win a FREE iPhone!!!, promo@spam.com, Spam, 2024-01-01 10:00:00
+2, Team standup at 10am, manager@company.com, Legitimate, 2024-01-01 11:00:00
+
+### PDF Report Includes
+- Summary: total emails, spam count, legitimate count
+- Full table with all email records
+
+### Email Record Fields
+
+- `email_id` — Auto-generated unique ID
+- `subject` — Email subject
+- `sender` — Sender email address
+- `is_spam` — Boolean spam status
+- `timestamp` — Record creation time
 
 ---
 
@@ -268,6 +322,64 @@ Aditya Sharma
 ## ⭐ Contribute
 
 Feel free to fork, improve and contribute to this project!
+
+---
+
+## 🐳 Running with Docker
+
+### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/) installed
+- [Docker Compose](https://docs.docker.com/compose/install/) installed
+
+### Docker Hub Images
+
+Pre-built images are available — no build step required:
+
+| Service | Docker Hub |
+|---|---|
+| Flask ML API | [rudra2006/spam-ml-api](https://hub.docker.com/r/rudra2006/spam-ml-api) |
+| Node.js Backend | [rudra2006/spam-node-backend](https://hub.docker.com/r/rudra2006/spam-node-backend) |
+| React Frontend | [rudra2006/spam-frontend](https://hub.docker.com/r/rudra2006/spam-frontend) |
+
+### Quick Start (New Users — No Clone Needed)
+
+Images are pre-built on Docker Hub. Just download the compose file and run:
+
+```bash
+curl -O https://raw.githubusercontent.com/Userunknown84/Spam-Detection-System/main/docker-compose.yml
+docker-compose up
+```
+
+Docker will automatically pull all 3 images. No build step, no clone required.
+
+### Quick Start (From Source)
+
+```bash
+git clone https://github.com/Userunknown84/Spam-Detection-System.git
+cd Spam-Detection-System
+docker-compose up --build
+```
+
+| Service | URL |
+|---|---|
+| React Frontend | http://localhost |
+| Node.js Backend | http://localhost:3000 |
+| Flask ML API | http://localhost:5000 |
+
+### Stop all containers
+```bash
+docker-compose down
+```
+
+### Architecture in Docker
+
+```
+Browser → nginx (port 80) → node-backend (port 3000) → ml-api (port 5000)
+```
+
+- **ml-api**: Python Flask service that loads the SVM model and serves `/predict`
+- **node-backend**: Node.js API gateway forwarding requests to ml-api
+- **frontend**: React app built with Vite, served via nginx; nginx proxies `/predict` to node-backend
 
 ---
 

@@ -7,11 +7,14 @@ from backend.xai_service import XAIService
 from backend.config import FRONTEND_URL, BASE_URL, PORT
 xai_service = XAIService()
 
-model = joblib.load("backend/linear_svm_model.pkl")
+# Load your models
+# Ensure these files are in the root directory
+
+# Open backend/main.py and update these lines:
+model = joblib.load("linear_svm_model.pkl")
 vectorizer = joblib.load("backend/tfidf_vectorizer.pkl")
 
 app = FastAPI(title="Spam Detection System")
-xai_service = XAIService()
 
 # ── CORS setup ────────────────────────────────────────────────
 app.add_middleware(
@@ -34,19 +37,14 @@ class PredictIn(BaseModel):
 @app.post("/predict")
 def predict(body: PredictIn):
     try:
-        # 1. Standard Prediction Logic
-        vectorized_text = xai_service.vectorizer.transform([body.text])
-        prediction = int(xai_service.model.predict(vectorized_text)[0])
+        vectorized_text = vectorizer.transform([body.text])
+        prediction = model.predict(vectorized_text)[0]
         
-        # 2. Use the new service class for the explanation
-        explanation = xai_service.get_local_explanation(body.text)
-        
-        return {
-            "prediction": prediction,
-            "explanation": explanation
-        }
+        # FIX: Convert numpy type to standard Python int
+        return {"prediction": int(prediction)}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
 # ── Basic health check ────────────────────────────────────────
 @app.get("/")
 def root():
@@ -60,9 +58,6 @@ def root():
 def health():
     return {"status": "healthy"}
 
-@app.get("/importance")
-def get_importance():
-    return {"global_importance": xai_service.get_global_importance()}
 # -- EMAIL DATABASE ROUTES (Issue #13) -------------------------
 from backend.emails import router as emails_router
 # from backend.database import init_db # Uncomment if DB is set up
@@ -74,3 +69,7 @@ app.include_router(emails_router)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("backend.main:app", host="0.0.0.0", port=PORT, reload=True)
+
+# -- EXPORT ROUTES (Issue #23) ------------------------------------------------
+from export import router as export_router
+app.include_router(export_router)

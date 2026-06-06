@@ -1,0 +1,32 @@
+# --- Python Virtual Environment ---
+# Never push your local environment folder
+venv/
+env/
+.env
+
+# --- Python Compiled Files ---
+# Ignore compiled bytecode and cache folders
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Environment Variables ---
+# Never push secrets, API keys, or database credentials
+.env
+
+# --- Dependencies & Build Folders ---
+# Ignore node modules and frontend build files
+node_modules/
+dist/
+build/
+
+# --- Machine Learning Models ---
+# Large files or binary model files can bloat your repo
+# Only remove the '#' if you prefer NOT to track these in Git
+# *.pkl
+
+# --- VS Code & IDE Settings ---
+.vscode/
+.idea/
+.DS_Store
