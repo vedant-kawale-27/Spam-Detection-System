@@ -1,22 +1,3 @@
-<<<<<<< HEAD
-# Python
-venv/
-spamdetection/venv/
-__pycache__/
-*.pyc
-
-# Environment variables
-.env
-
-# Node
-node_modules/
-
-# Build files
-dist/
-
-# Windows
-*.lnk
-=======
 # --- Python Virtual Environment ---
 # Never push your local environment folder
 venv/
@@ -49,4 +30,3 @@ build/
 .vscode/
 .idea/
 .DS_Store
->>>>>>> upstream/main
