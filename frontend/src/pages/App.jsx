@@ -37,8 +37,6 @@ const logout = () => {
       });
       setResult(res.data.prediction);
       setConfidence(res.data.confidence ?? null);
-      setConfidenceLevel(res.data.confidence_level || 'medium');
-      setConfidenceEmoji(res.data.level_emoji || '🟡');
     } catch (error) {
       setResult("Error");
     } finally {
@@ -138,27 +136,20 @@ const logout = () => {
             className="mt-4 w-full py-3 rounded-xl font-medium bg-indigo-500 text-white hover:bg-indigo-600 active:scale-95 transition-all"
           >
             {loading ? "Analyzing..." : `Analyze ${type}`}
-  {result && (
-  <div className="mt-3 border border-gray-300 rounded-xl p-2">
-    <div className={`p-4 rounded-xl font-semibold transition-all duration-300 ${getBg()} ${getColor()}`}>
-      {result === "ham" && "✅ Safe Message"}
-      {result === "spam" && "❌ Spam Detected"}
-      {result === "smishing" && "⚠️ Fraud Alert"}
-      {result === "Error" && "⚠️ Something went wrong"}
-    </div>
+          </button>
 
-    {confidence && result !== "Error" && (
-      <div className="mt-3 flex items-center gap-3">
-        <span className="text-lg">{confidenceLevelEmoji}</span>
-        <span className={`font-bold text-${confidenceLevelColor}-500`}>
-          {confidenceLevel.charAt(0).toUpperCase() + confidenceLevel.slice(1)} Confidence
-        </span>
-        <span className="text-gray-400">({confidence}%)</span>
-      </div>
-    )}
-  </div>
-)}
-<WordCloud darkMode={darkMode} />
+          {result && (
+            <div className="mt-3 border border-gray-300 rounded-xl p-2">
+              <div className={`p-4 rounded-xl font-semibold transition-all duration-300 ${getBg()} ${getColor()}`}>
+                {result === "ham" && "✅ Safe Message"}
+                {result === "spam" && "❌ Spam Detected"}
+                {result === "smishing" && "⚠️ Fraud Alert"}
+                {result === "Error" && "⚠️ Something went wrong"}
+              </div>
+            </div>
+          )}
+          <WordCloud darkMode={darkMode} />
+
           {result && confidence !== null && result !== "Error" && (
             <div className="mt-3 text-left">
               <p className={`text-xs font-medium mb-1 ${ darkMode ? "text-gray-400" : "text-gray-600" }`}>
@@ -169,7 +160,7 @@ const logout = () => {
                   className={`h-2 rounded-full transition-all duration-500 ${
                     result === "ham" ? "bg-green-500" :
                     result === "spam" ? "bg-red-500" : "bg-orange-500"
-                  }`}
+                  }
                   style={{ width: `${confidencePct}%` }}
                 />
               </div>
