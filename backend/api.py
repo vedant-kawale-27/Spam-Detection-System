@@ -33,6 +33,10 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*" }})
 
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "super-secret")
+jwt = JWTManager(app)
+
 MODEL_PATH = os.getenv("MODEL_PATH", "linear_svm_model.pkl")
 VECTORIZER_PATH = os.getenv("VECTORIZER_PATH", "tfidf_vectorizer.pkl")
 LABEL_ENCODER_PATH = os.getenv("LABEL_ENCODER_PATH", "label_encoder.pkl")
@@ -337,10 +341,11 @@ def gmail_auth_url():
     return jsonify({"auth_url": url})
 
 @app.route("/gmail/callback", methods=["GET"])
+@jwt_required()
 def gmail_callback():
     code = request.args.get("code")
     redirect_uri = request.args.get("redirect_uri") or "http://localhost:3000/gmail/callback"
-    username = request.headers.get("X-User-Username", "default_user")
+    username = get_jwt_identity()
     
     if not code:
         return jsonify({"error": "Authorization code is missing"}), 400
@@ -355,8 +360,9 @@ def gmail_callback():
         return jsonify({"error": f"Failed to exchange Google code: {str(e)}"}), 500
 
 @app.route("/gmail/emails", methods=["GET"])
+@jwt_required()
 def gmail_emails():
-    username = request.headers.get("X-User-Username", "default_user")
+    username = get_jwt_identity()
     user_tokens = TOKEN_STORE.get(username, {}).get("gmail")
     
     if not user_tokens:
@@ -385,10 +391,11 @@ def outlook_auth_url():
     return jsonify({"auth_url": url})
 
 @app.route("/outlook/callback", methods=["GET"])
+@jwt_required()
 def outlook_callback():
     code = request.args.get("code")
     redirect_uri = request.args.get("redirect_uri") or "http://localhost:3000/outlook/callback"
-    username = request.headers.get("X-User-Username", "default_user")
+    username = get_jwt_identity()
     
     if not code:
         return jsonify({"error": "Authorization code is missing"}), 400
@@ -403,8 +410,9 @@ def outlook_callback():
         return jsonify({"error": f"Failed to exchange Outlook code: {str(e)}"}), 500
 
 @app.route("/outlook/emails", methods=["GET"])
+@jwt_required()
 def outlook_emails():
-    username = request.headers.get("X-User-Username", "default_user")
+    username = get_jwt_identity()
     user_tokens = TOKEN_STORE.get(username, {}).get("outlook")
     
     if not user_tokens:
@@ -427,10 +435,11 @@ def outlook_emails():
         return jsonify({"error": f"Failed to fetch Outlook emails: {str(e)}"}), 500
 
 @app.route("/scan-emails", methods=["POST"])
+@jwt_required()
 def scan_emails_route():
     data = request.get_json(silent=True) or {}
     provider = data.get("provider", "").lower()
-    username = request.headers.get("X-User-Username", "default_user")
+    username = get_jwt_identity()
     
     if provider not in ("gmail", "outlook"):
         return jsonify({"error": "Invalid provider. Must be 'gmail' or 'outlook'."}), 400
