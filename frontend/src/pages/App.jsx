@@ -31,7 +31,6 @@ function SpamDetector() {
   const [showThemes, setShowThemes] = useState(false);
 
   const [showSettings, setShowSettings] = useState(false);
-   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("provider") && params.get("code")) {
@@ -42,11 +41,11 @@ function SpamDetector() {
 
   const { user, logout } = useAuth();
   const handleLogout = () => {
-  logout();
-  localStorage.removeItem("user");
-  navigate("/");
-};
- 
+    logout();
+    localStorage.removeItem("user");
+    navigate("/");
+  };
+
   const {
     themeMode,
     setThemeMode,
@@ -100,6 +99,11 @@ function SpamDetector() {
     confidence !== null
       ? Math.min(confidence * 50 + 50, 100).toFixed(1)
       : "0.0";
+
+  const confidenceValue = Number(confidencePct);
+
+  const riskLevel =
+    confidenceValue >= 80 ? "High" : confidenceValue >= 50 ? "Medium" : "Low";
 
   return (
     <div
@@ -247,11 +251,9 @@ function SpamDetector() {
           <h1 className="text-3xl font-extrabold mb-2 tracking-tight">
             📨 Spam Detector
           </h1>
-
           <p className="font-semibold text-sm mb-6 opacity-75">
             Analyze messages, emails & URLs instantly
           </p>
-
           {/* Navigation Tabs */}
           <div className="flex justify-center gap-2 mb-6 border-b border-slate-500/20 pb-3 text-sm font-bold">
             <button
@@ -305,23 +307,121 @@ function SpamDetector() {
               Email Scanner
             </button>
           </div>
-
           {activeTab === "detector" ? (
-            <>
-              <div className="mb-4">
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className={`w-full p-3.5 rounded-xl border font-semibold focus:outline-none focus:ring-2 transition-all ${
-                    isDark ? activeTheme.inputDark : activeTheme.input
+  <>
+          {/* Enhanced Input Section */}
+          <div className="relative w-full mb-4 group text-left">
+            <textarea
+              className={`w-full border p-4 pr-12 rounded-2xl focus:outline-none focus:ring-2 resize-none text-sm sm:text-base transition-all shadow-inner leading-relaxed
+    [&::-webkit-scrollbar]:w-2
+    [&::-webkit-scrollbar-track]:bg-transparent
+    [&::-webkit-scrollbar-thumb]:rounded-full
+    ${
+      isDark
+        ? `${activeTheme.inputDark} focus:border-blue-500/50 [&::-webkit-scrollbar-thumb]:bg-slate-700 hover:[&::-webkit-scrollbar-thumb]:bg-slate-600`
+        : `${activeTheme.input} focus:border-indigo-500/50 [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400`
+    }`}
+    
+              rows="5"
+              placeholder={
+                type === "url"
+                  ? "Paste or type the suspicious website link URL here to test..."
+                  : type === "message"
+                    ? "Type your SMS or chat message content here for inspection..."
+                    : "Paste the full text or body of your email content here..."
+              }
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+
+            {text && (
+              <button
+                onClick={() => setText("")}
+                className={`absolute top-3.5 right-3.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all hover:scale-110 shadow-sm ${
+                  isDark
+                    ? "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                    : "bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-800"
+                }`}
+                title="Clear input"
+              >
+                ✕
+              </button>
+            )}
+
+            <div className="flex justify-end items-center mt-1.5 px-1 text-xs font-medium tracking-wide opacity-70">
+              <span className={text.length > 500 ? "text-orange-500" : ""}>
+                {text.length.toLocaleString()} characters
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={handlePredict}
+            className={`mt-2 w-full py-3.5 rounded-xl font-bold text-white shadow-md active:scale-95 transition-all ${activeTheme.accent}`}
+          >
+            {loading
+              ? "Analyzing..."
+              : `Analyze ${type === "url" ? "URL" : type}`}
+          </button>
+          {/* {result && (
+            <div className="mt-4 border border-slate-350/20 rounded-2xl p-2 bg-slate-500/5">
+              <div
+                className={`p-4 rounded-xl font-bold transition-all duration-300 ${getBg()} ${getColor()}`}
+              >
+                {result === "ham" && "✅ Safe Message"}
+                {result === "spam" && "🚫 Spam Detected"}
+                {result === "smishing" && "⚠️ Fraud Alert"}
+                {result === "safe" && "✅ Safe URL"}
+                {result === "malicious" && "🚨 Malicious URL"}
+                {result === "Error" && "⚠️ Something went wrong"}
+              </div>
+            </div>
+          )} */}
+          {result && (
+            <div
+              className={`mt-5 rounded-3xl p-5 shadow-lg border ${
+                isDark
+                  ? "bg-slate-900/50 border-slate-700"
+                  : "bg-white/70 border-slate-200"
+              }`}
+            >
+              {/* Heading */}
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-lg font-bold">📊 Analysis Result</h2>
+
+                {/* Badge */}
+                <span
+                  className={`px-4 py-2 rounded-full text-sm font-bold ${
+                    result === "ham" || result === "safe"
+                      ? "bg-green-500 text-white"
+                      : result === "spam" || result === "malicious"
+                        ? "bg-red-500 text-white"
+                        : result === "smishing"
+                          ? "bg-orange-500 text-white"
+                          : "bg-yellow-500 text-white"
                   }`}
                 >
-                  <option value="message">Message</option>
-                  <option value="email">Email</option>
-                  <option value="url">URL</option>
-                </select>
+                  {result === "ham" && "✅ Safe"}
+                  {result === "safe" && "✅ Safe"}
+                  {result === "spam" && "🚫 Spam"}
+                  {result === "malicious" && "🚨 Malicious"}
+                  {result === "smishing" && "⚠️ Fraud"}
+                  {result === "Error" && "⚠️ Error"}
+                </span>
               </div>
 
+              {/* Confidence */}
+              {confidence !== null && result !== "Error" && (
+                <>
+                  <p className="text-sm opacity-70 mb-1">Confidence Score</p>
+
+                  <h3 className="text-3xl font-bold mb-4">{confidencePct}%</h3>
+
+                  {/* Progress Bar */}
+                  <div
+                    className={`w-full rounded-full h-3 mb-5 ${
+                      isDark ? "bg-slate-700" : "bg-slate-200"
+                    }`}/>
+                
               <textarea
                 className={`w-full border p-3.5 rounded-xl focus:outline-none focus:ring-2 resize-none text-sm sm:text-base transition-all ${
                   isDark ? activeTheme.inputDark : activeTheme.input
@@ -361,7 +461,7 @@ function SpamDetector() {
                   </div>
                 </div>
               )}
-              <WordCloud darkMode={darkMode} />
+              {/* <WordCloud darkMode={darkMode} /> */}
 
               {result && confidence !== null && result !== "Error" && (
                 <div className="mt-4 text-left">
@@ -372,18 +472,51 @@ function SpamDetector() {
                     className={`w-full rounded-full h-2 ${isDark ? "bg-slate-800" : "bg-slate-200"}`}
                   >
                     <div
-                      className={`h-2 rounded-full transition-all duration-500 ${
+                      className={`h-3 rounded-full transition-all duration-500 ${
                         result === "ham" || result === "safe"
                           ? "bg-green-500"
                           : result === "spam" || result === "malicious"
                             ? "bg-red-500"
                             : "bg-orange-500"
                       }`}
-                      style={{ width: `${confidencePct}%` }}
+                      style={{
+                        width: `${confidencePct}%`,
+                      }}
                     />
                   </div>
-                </div>
+
+                  {/* Risk Level */}
+                  <div className="mb-5">
+                    <p className="text-sm opacity-70 mb-2">Risk Level</p>
+
+                    <span
+                      className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                        riskLevel === "Low"
+                          ? "bg-green-100 text-green-700"
+                          : riskLevel === "Medium"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {riskLevel === "Low" && "🟢 Low"}
+                      {riskLevel === "Medium" && "🟠 Medium"}
+                      {riskLevel === "High" && "🔴 High"}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-sm opacity-75 leading-relaxed">
+                    {(result === "spam" ||
+                      result === "smishing" ||
+                      result === "malicious") &&
+                      "This content contains characteristics commonly found in spam, phishing, or malicious attacks."}
+
+                    {(result === "ham" || result === "safe") &&
+                      "No suspicious patterns were detected in this content."}
+                  </p>
+                </>
               )}
+            </div>
 
               {result && result !== "Error" && type !== "url" && (
                 <FeedbackWidget
@@ -421,9 +554,21 @@ function SpamDetector() {
           ) : (
             <EmailHeaderAnalyzer />
           )}
+          <WordCloud darkMode={isDark} />
+          <FeatureImportance darkMode={isDark} />
+          </>
+          ) : activeTab === "bulk" ? (
+          <BulkSpamDetection />
+          ) : activeTab === "insights" ? (
+          <SpamInsightsDashboard />
+          ) : activeTab === "scanner" ? (
+          <EmailScannerDashboard />
+          ) : (
+          <EmailHeaderAnalyzer />)}
         </div>
       </div>
     </div>
   );
 }
+
 export default SpamDetector;

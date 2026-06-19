@@ -134,12 +134,14 @@ def predict():
             text_vector = url_vectorizer.transform([text])
             prediction = url_model.predict(text_vector)
             final_output = URL_LABELS.get(int(prediction[0]), "unknown")
+            confidence = 0.90
             if final_output == "safe" and heuristic_url_is_malicious(text):
                 final_output = "malicious"
         else:
             text_vector = vectorizer.transform([text])
             prediction = model.predict(text_vector)
             final_output = label_encoder.inverse_transform(prediction)[0]
+            confidence = 0.90
 
          # ─── GET CONFIDENCE SCORE ──────────────────────────────────────
         # Get probability/confidence from model
@@ -180,17 +182,17 @@ def predict():
         with open(LOG_FILE, "a") as f:
             from datetime import datetime
             f.write(f"{datetime.now()} - Prediction: '{text_preview}' -> {final_output}\n")
-        feat
+        # feat
             
-        return jsonify({
-            "input": text, 
-            "prediction": final_output
-        })
+        # return jsonify({
+        #     "input": text, 
+        #     "prediction": final_output
+        # })
     
         # Return response with domain analysis
 
 
-        main
+        # main
         return jsonify({
             "input": text,
             "prediction": final_output,
