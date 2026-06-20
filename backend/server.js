@@ -26,8 +26,10 @@ app.use(express.json());
 // Auth routes , History routes
 const authRoutes = require("./routes/authRoutes");
 const historyRoutes = require("./routes/historyRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 app.use("/api/auth", authRoutes);
 app.use("/api/history", historyRoutes);
+app.use("/analytics", analyticsRoutes);
 
 const { protect } = require("./middleware/authMiddleware");
 
@@ -88,13 +90,18 @@ app.post("/predict", protect, async (req, res) => {
     );
     console.log("Flask responded:", response.data);
 
-    // Save history automatically
-    await History.create({
-      user: req.user.id,
-      query: text,
-      prediction: response.data.prediction,
-      type: type,
-    });
+    // Save history automatically (best-effort: a DB failure shouldn't break the prediction response)
+    try {
+      await History.create({
+        user: req.user.id,
+        query: text,
+        prediction: response.data.prediction,
+        type: type,
+        confidence: response.data.confidence,
+      });
+    } catch (historyError) {
+      console.error("Failed to save history:", historyError.message);
+    }
 
     res.json(response.data);
   } catch (error) {

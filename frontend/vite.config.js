@@ -17,6 +17,7 @@ export default defineConfig({
       '/outlook': 'http://localhost:3000',
       '/scan-emails': 'http://localhost:3000',
       '/importance': 'http://localhost:3000',
+      '/analytics': 'http://localhost:3000',
     },
   },
 })

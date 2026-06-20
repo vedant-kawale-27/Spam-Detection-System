@@ -24,6 +24,10 @@ const historySchema = new mongoose.Schema(
       required: true,
       enum: ["sms", "email", "url", "message"],
     },
+
+    confidence: {
+      type: Number,
+    },
   },
   { timestamps: true }
 );
