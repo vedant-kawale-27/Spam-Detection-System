@@ -62,10 +62,20 @@ entry in `manifest.json` before loading the extension (or use
   are based on current unofficial markup and **will break** if Google/Microsoft
   change their markup. If badges stop appearing, inspect a message row in
   devtools and update the selectors at the top of the relevant file.
-- This has not been verified against a live, logged-in Gmail/Outlook session
-  in this environment — only the pure logic (`src/lib/*.js`) is covered by
-  automated tests. Manual verification in a real browser against both
-  providers is recommended before merging.
+- Confirmed loading unpacked in a real Chrome profile with no manifest/
+  background errors (service worker starts cleanly). Scanning behavior
+  against a live, logged-in Gmail/Outlook inbox still needs end-to-end
+  verification by whoever has that session available.
+
+## Publishing (optional follow-up)
+
+This PR ships the extension as source only — it is not published to any
+store. Getting a one-click "Add to Chrome"/"Add to Firefox" install requires
+the project maintainer to submit it under their own developer account. Draft
+listing copy, a privacy policy, permission justifications, and icons are in
+`store-listing/` and `icons/` to make that easier later; real screenshots
+still need to be captured from a live browser session (see
+`store-listing/screenshots/README.md`).
 
 ## Tests
 
