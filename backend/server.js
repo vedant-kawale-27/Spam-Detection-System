@@ -1,5 +1,8 @@
+const { formatError, errorHandler, errorCodes } = require('./utils/errorHelper');
 require("dotenv").config();
 const dns = require("dns");
+const validateEnv = require('./utils/validateEnv');
+validateEnv(); // Validate environment variables
 dns.setServers(["8.8.8.8", "1.1.1.1"]); // ensure SRV records resolve on all networks
 const express = require("express");
 const seedAdminUser = require("./seeders/adminSeeder");
@@ -27,7 +30,15 @@ mongoose
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({limit: '1mb'}));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        message: 'Server is running',
+        limit: '1MB'
+    });
+});
 
 // ===== REQUEST ID MIDDLEWARE =====
 app.use((req, res, next) => {
@@ -677,7 +688,158 @@ app.post("/scan-emails", protect, async (req, res) => {
   }
 });
 
+app.use((err, req, res, next) => {
+  if(err.type==='entity.too.large' || err.message==='request entity too large') {
+    return res.status(413).json({
+      success: false,
+      error: 'Payload too large. Please reduce the size of your request.',
+      message: 'Request size exceeds 1MB limit.',
+    });
+  }
+  next(err);
+});
+app.use(errorHandler);
+// ====== START SERVER ======
+// Protected: connect a read-only IMAP inbox for scheduled scanning
+app.post("/imap/connect", protect, async (req, res) => {
+  try {
+    const response = await axios.post(`${ML_API_BASE}/imap/connect`, req.body, {
+      headers: { "X-User-Username": req.user.username },
+    });
+    res.json(response.data);
+  } catch (error) {
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
+      console.error("Flask ML API is unavailable:", error.message);
+      return res.status(503).json({
+        error: "Flask ML API is currently unavailable. Please try again later.",
+      });
+    }
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    console.error(error.message);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+// Protected: get the current IMAP connection status for the logged-in user
+app.get("/imap/status", protect, async (req, res) => {
+  try {
+    const response = await axios.get(`${ML_API_BASE}/imap/status`, {
+      headers: { "X-User-Username": req.user.username },
+    });
+    res.json(response.data);
+  } catch (error) {
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
+      console.error("Flask ML API is unavailable:", error.message);
+      return res.status(503).json({
+        error: "Flask ML API is currently unavailable. Please try again later.",
+      });
+    }
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    console.error(error.message);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+// Protected: update the scheduled scan interval for the connected IMAP inbox
+app.put("/imap/schedule", protect, async (req, res) => {
+  try {
+    const response = await axios.put(`${ML_API_BASE}/imap/schedule`, req.body, {
+      headers: { "X-User-Username": req.user.username },
+    });
+    res.json(response.data);
+  } catch (error) {
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
+      console.error("Flask ML API is unavailable:", error.message);
+      return res.status(503).json({
+        error: "Flask ML API is currently unavailable. Please try again later.",
+      });
+    }
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    console.error(error.message);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+// Protected: revoke IMAP access and delete stored credentials
+app.post("/imap/disconnect", protect, async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${ML_API_BASE}/imap/disconnect`,
+      {},
+      { headers: { "X-User-Username": req.user.username } },
+    );
+    res.json(response.data);
+  } catch (error) {
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
+      console.error("Flask ML API is unavailable:", error.message);
+      return res.status(503).json({
+        error: "Flask ML API is currently unavailable. Please try again later.",
+      });
+    }
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    console.error(error.message);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+// Protected: trigger an immediate scan of the connected IMAP inbox
+app.post("/imap/scan-now", protect, async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${ML_API_BASE}/imap/scan-now`,
+      {},
+      { headers: { "X-User-Username": req.user.username } },
+    );
+    res.json(response.data);
+  } catch (error) {
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
+      console.error("Flask ML API is unavailable:", error.message);
+      return res.status(503).json({
+        error: "Flask ML API is currently unavailable. Please try again later.",
+      });
+    }
+    if (error.response) {
+      const status = error.response.status === 401 ? 400 : error.response.status;
+      return res.status(status).json(error.response.data);
+    }
+    console.error(error.message);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+// Protected: get the stored history of scheduled/manual IMAP scan results
+app.get("/imap/scan-results", protect, async (req, res) => {
+  try {
+    const response = await axios.get(`${ML_API_BASE}/imap/scan-results`, {
+      params: req.query,
+      headers: { "X-User-Username": req.user.username },
+    });
+    res.json(response.data);
+  } catch (error) {
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
+      console.error("Flask ML API is unavailable:", error.message);
+      return res.status(503).json({
+        error: "Flask ML API is currently unavailable. Please try again later.",
+      });
+    }
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    console.error(error.message);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+ 
