@@ -63,6 +63,40 @@ const connectWithRetry = async (retries=5, delay=5000) => {
     }
 };
 
+//MONGODB CONNECTION POOL MONITORING
+const monitorConnectionPool = () => {
+  setInterval(() => {
+    try {
+      const pool = mongoose.connection.client.topology.s.pool;
+      if(pool) {
+        const size= pool.size||0;
+        const available= pool.availableConnections||0;
+        const used= pool.usedCount||0;
+        const usagePercent = size > 0 ? (used / size) * 100 : 0;
+
+        console.log(`[DB Pool] Size: ${size}, Available: ${available}, Used: ${used} (${usagePercent}%)`);
+
+        //Alert if usage exceeds 80%
+        if(usagePercent > 80){
+          console.warn(`[DB Pool] ⚠️ High connection pool usage: ${usagePercent.toFixed(2)}%`);
+        }
+      }
+    } catch (err) {
+    }
+  },3000); // every 3 seconds
+};
+
+//Call after MONGODB connection is established
+mongoose
+    .connect(process.env.MONGODB_URI)
+    .then(() => {
+        console.log("✅ MongoDB connected");
+        monitorConnectionPool(); // 👈 Add this line
+        seedAdminUser();
+    })
+    .catch((err) => console.error("❌ MongoDB connection error:", err));
+
+
 if(process.env.NODE_ENV === 'development'){
   //Log all queries in development mode
   mongoose.set('debug',true);
