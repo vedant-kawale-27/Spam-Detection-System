@@ -35,7 +35,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*" }})
+ALLOWED_ORIGIN = os.getenv("NODE_GATEWAY_ORIGIN", "http://localhost:3000")
+CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGIN}})
 
 from functools import wraps
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, verify_jwt_in_request
