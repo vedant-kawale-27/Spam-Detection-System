@@ -5,6 +5,8 @@ import App from './pages/App.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { GoogleOAuthProvider } from '@react-oauth/google'
@@ -24,6 +26,8 @@ createRoot(document.getElementById('root')).render(
               <Route path="/register" element={<Register />} />
               <Route path="/app" element={<App />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:id/:token" element={<ResetPassword />} />
             </Routes>
           </AuthProvider>
         </GoogleOAuthProvider>
