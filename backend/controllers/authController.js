@@ -151,4 +151,29 @@ const googleLogin = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, googleLogin };
+const updateAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    const avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { avatarUrl },
+      { new: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ message: 'Avatar updated successfully', user });
+  } catch (err) {
+    console.error('Avatar upload error:', err);
+    res.status(500).json({ error: 'Server error. Please try again.' });
+  }
+};
+
+module.exports = { register, login, getMe, googleLogin, updateAvatar };
