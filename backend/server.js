@@ -382,7 +382,7 @@ Sentry.captureException(error, {
 });
 
 
-console.log("History saved");
+
 
 // Protected: record user feedback on a prediction (forwarded to the ML API)
 const ML_API_BASE = (
