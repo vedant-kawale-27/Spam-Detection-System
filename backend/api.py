@@ -41,6 +41,8 @@ app = Flask(__name__)
 xai_engine = ExplanationEngine()
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
+BASE_DIR = Path(__file__).resolve().parent
+
 def resolve_path(env_var, default_filename):
     val = os.getenv(env_var)
     if val:

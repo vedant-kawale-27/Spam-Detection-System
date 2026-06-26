@@ -158,7 +158,7 @@ class ExplanationEngine:
 
     def _count_excessive_caps(self, text: str) -> bool:
         words = self.WORD_PATTERN.findall(text)
-        all_caps = [word for word in words if len(word) >= 4 and word.isupper()]
+        all_caps = [word for word in words if len(word) >= 3 and word.isupper()]
         return len(all_caps) >= 2
 
     def analyze(self, text: str, input_type: str = "message") -> Dict:
