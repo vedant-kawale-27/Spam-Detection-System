@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import csv
 import joblib
+import numpy as np
 import os
 import re
 from collections import Counter
@@ -8,6 +9,7 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from domain_checker import analyze_text
 from email_header_analyzer import analyze_headers
+from explanation_engine import ExplanationEngine
 from pathlib import Path
 from flask_cors import CORS
 import sys
@@ -35,38 +37,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 load_dotenv()
 
 app = Flask(__name__)
-ALLOWED_ORIGIN = os.getenv("NODE_GATEWAY_ORIGIN", "http://localhost:3000")
-CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGIN}})
 
-from functools import wraps
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, verify_jwt_in_request
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "super-secret")
-jwt = JWTManager(app)
-
-def jwt_or_secret_required():
-    def decorator(fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            secret = request.headers.get("X-Internal-Secret")
-            expected_secret = os.getenv("INTERNAL_SECRET", "super-secret-internal-key")
-            if secret and secret == expected_secret:
-                return fn(*args, **kwargs)
-            verify_jwt_in_request()
-            return fn(*args, **kwargs)
-        return wrapper
-    return decorator
-
-def get_current_user_identity():
-    secret = request.headers.get("X-Internal-Secret")
-    expected_secret = os.getenv("INTERNAL_SECRET", "super-secret-internal-key")
-    if secret and secret == expected_secret:
-        return request.headers.get("X-User-Username")
-    try:
-        return get_jwt_identity()
-    except Exception:
-        return None
-
-BASE_DIR = Path(__file__).resolve().parent
+xai_engine = ExplanationEngine()
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 def resolve_path(env_var, default_filename):
     val = os.getenv(env_var)
@@ -172,6 +145,13 @@ def predict():
         text_vector = vectorizer.transform([text])
         prediction = model.predict(text_vector)
         final_output = label_encoder.inverse_transform(prediction)[0]
+
+        # Confidence using decision function for LinearSVC
+        try:
+            scores = model.decision_function(text_vector)
+            confidence = round(float(np.max(scores)), 4)
+        except Exception:
+            confidence = None
         
         # Get domain analysis
         domain_analysis = analyze_text(text)
@@ -236,26 +216,22 @@ def predict():
         with open(LOG_FILE, "a") as f:
             from datetime import datetime
             f.write(f"{datetime.now()} - Prediction: '{text_preview}' -> {final_output}\n")
-        # feat
-            
-        # return jsonify({
-        #     "input": text, 
-        #     "prediction": final_output
-        # })
-    
-        # Return response with domain analysis
+        
+        # Generate XAI explanation for the input text
+        explanation = xai_engine.analyze(text, input_type=input_type)
 
-
-        # main
-        return jsonify({
+        # Return response with domain analysis and explanation
+        response_data = {
             "input": text,
+            "result": final_output,
             "prediction": final_output,
-            "confidence": confidence,
-            "confidence_level": confidence_level,
-            "level_color": level_color,
-            "level_emoji": level_emoji,
-            "domain_analysis": domain_analysis
-        })
+            "domain_analysis": domain_analysis,
+            "explanation": explanation,
+        }
+        if confidence is not None:
+            response_data["confidence"] = confidence
+
+        return jsonify(response_data)
 
     except Exception as e:
         with open(LOG_FILE, "a") as f:

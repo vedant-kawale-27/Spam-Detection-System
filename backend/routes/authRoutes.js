@@ -15,7 +15,14 @@ const storage = multer.diskStorage({
     cb(null, req.user.id + '-' + Date.now() + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage });
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+const upload = multer({ storage, fileFilter });
 const registerValidation = [
   body('username').trim().isLength({ min: 3, max: 30 }).withMessage('Username must be 3–30 characters'),
   body('email').isEmail().withMessage('Please enter a valid email'),

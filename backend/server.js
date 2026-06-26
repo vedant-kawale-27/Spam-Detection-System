@@ -738,7 +738,8 @@ app.get("/gmail/callback", async (req, res) => {
     if (!code) {
       return res.status(400).json({ error: "Authorization code is missing" });
     }
-    res.redirect(`http://localhost:5173/app?provider=gmail&code=${code}`);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}/app?provider=gmail&code=${code}`);
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Something went wrong" });
@@ -832,7 +833,8 @@ app.get("/outlook/callback", async (req, res) => {
     if (!code) {
       return res.status(400).json({ error: "Authorization code is missing" });
     }
-    res.redirect(`http://localhost:5173/app?provider=outlook&code=${code}`);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}/app?provider=outlook&code=${code}`);
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Something went wrong" });
@@ -1064,6 +1066,49 @@ const server = app.listen(PORT, () => {
   const totalTime = Date.now() - SERVER_START_TIME;
   displayBanner();
   console.log(`⏱️ Total startup time: ${totalTime}ms`);
+// ====== PREDICTION STATISTICS ======
+app.get('/api/stats', protect, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        const total = await History.countDocuments({ user: userId });
+        const spam = await History.countDocuments({ user: userId, prediction: 'spam' });
+        const ham = await History.countDocuments({ user: userId, prediction: 'ham' });
+        
+        const daily = await History.aggregate([
+            { $match: { user: userId } },
+            { $group: { 
+                _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, 
+                count: { $sum: 1 } 
+            }},
+            { $sort: { _id: -1 } },
+            { $limit: 7 }
+        ]);
+        
+        // Get accuracy if feedback exists
+        const feedbackCount = await History.countDocuments({ 
+            user: userId, 
+            feedback: { $exists: true } 
+        });
+        
+        res.json({
+            success: true,
+            data: {
+                total,
+                spam,
+                ham,
+                spamRatio: total > 0 ? (spam / total) * 100 : 0,
+                daily,
+                feedbackCount
+            }
+        });
+    } catch (error) {
+        console.error('Stats error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
 });
 
 // ========================================
@@ -1215,32 +1260,16 @@ app.get("/imap/scan-results", protect, async (req, res) => {
 });
 });
 
-const PORT = process.env.PORT || 3000;
+// ========================================
+// START SERVER
+// ========================================
+
+const PORT = config.port;
 const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  const totalTime = Date.now() - SERVER_START_TIME;
+  displayBanner();
+  console.log(`⏱️ Total startup time: ${totalTime}ms`);
 });
-
-// ===== GRACEFUL SHUTDOWN =====
-const gracefulShutdown = async signal => {
-  console.log(`\nReceived ${signal}. Closing server...`);
-
-  //Stop accepting new requests
-  server.close(async () => {
-    console.log('HTTP server closed.');
-  });
-
-  //Close DB connection
-  try {
-    await mongoose.disconnect();
-    console.log('MongoDB connection closed.');
-  } catch (err) {
-    console.error('Error closing MongoDB connection:', err);
-  }
-
-  console.log('Shutdown complete. Exiting process.');
-  process.exit(0);
-}
-
 // Listen for termination signals
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
