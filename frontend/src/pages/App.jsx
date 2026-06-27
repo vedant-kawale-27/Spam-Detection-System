@@ -46,7 +46,7 @@ function SpamDetector() {
     return "detector";
   }); // "detector", "bulk", "insights", "authenticity", or "scanner"
 
-  const { user, logout } = useAuth();
+  const { user, login, logout } = useAuth();
   const handleLogout = () => {
     logout();
     localStorage.removeItem("user");
@@ -159,15 +159,13 @@ function SpamDetector() {
              const formData = new FormData();
              formData.append('avatar', file);
              try {
-                const token = localStorage.getItem('token');
-                const res = await api.post(`${import.meta.env.VITE_API_URI || ''}/api/v1/auth/avatar`, formData, {
+                const res = await api.post(`/api/v1/auth/avatar`, formData, {
                    headers: { 
-                     'Content-Type': 'multipart/form-data',
-                     Authorization: `Bearer ${token}` 
+                     'Content-Type': 'multipart/form-data'
                    }
                 });
                 localStorage.setItem('user', JSON.stringify(res.data.user));
-                window.location.reload();
+                login(res.data.user);
              } catch(err) {
                 alert('Failed to upload avatar: ' + (err.response?.data?.error || err.message));
              }
