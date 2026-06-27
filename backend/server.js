@@ -360,6 +360,9 @@ app.post("/predict", protect, async (req, res) => {
         text: text.trim(),
         type: type.toLowerCase(),
       },
+      {
+        headers: { "X-Forwarded-For": req.ip || req.connection.remoteAddress }
+      }
     );
     console.log("Flask responded:", response.data);
 

@@ -42,9 +42,12 @@ def log_request(response):
     return response
 
 # ─── RATE LIMITER ────────────────────────────────────────────────
+def get_forwarded_address():
+    return request.headers.get("X-Forwarded-For", request.remote_addr)
+
 limiter = Limiter(
     app=app,
-    key_func=get_remote_address,
+    key_func=get_forwarded_address,
     default_limits=["10 per minute"],
     storage_uri="memory://",
     strategy="fixed-window",
