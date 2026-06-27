@@ -9,6 +9,7 @@ import FeatureImportance from "../components/FeatureImportance";
 import History from "../components/History";
 import WordCloud from "../components/WordCloud";
 import FeedbackWidget from "../components/FeedbackWidget";
+import PredictionExplanation from "../components/PredictionExplanation";
 import Login from "./Login.jsx";
 import Register from "./Register.jsx";
 import EmailHeaderAnalyzer from "../components/EmailHeaderAnalyzer";
@@ -27,11 +28,12 @@ function SpamDetector() {
   const [text, setText] = useState("");
   const [result, setResult] = useState("");
   const [confidence, setConfidence] = useState(null);
+  const [explanation, setExplanation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState("message");
   const [copied, setCopied] = useState(false);
   const detectType = (text) => {
-    if(!text || text.trim().length === 0) return 'message';
+  if (!text || text.trim().length === 0) return 'message';
   const trimmed = text.trim();
   if (trimmed.includes('http://') || trimmed.includes('https://')) return 'url';
   if (trimmed.includes('@') && trimmed.includes('.')) {
@@ -56,7 +58,7 @@ function SpamDetector() {
     return "detector";
   }); // "detector", "bulk", "insights", "authenticity", or "scanner"
 
-  const { user, logout } = useAuth();
+  const { user, login, logout } = useAuth();
   const handleLogout = () => {
     logout();
     localStorage.removeItem("user");
@@ -83,8 +85,10 @@ function SpamDetector() {
       });
       setResult(res.data.prediction);
       setConfidence(res.data.confidence ?? null);
+      setExplanation(res.data.explanation ?? null);
     } catch (error) {
       setResult("Error");
+      setExplanation(null);
     } finally {
       setLoading(false);
     }
@@ -183,15 +187,13 @@ function SpamDetector() {
              const formData = new FormData();
              formData.append('avatar', file);
              try {
-                const token = localStorage.getItem('token');
-                const res = await api.post(`${import.meta.env.VITE_API_URI || ''}/api/v1/auth/avatar`, formData, {
+                const res = await api.post(`/api/v1/auth/avatar`, formData, {
                    headers: { 
-                     'Content-Type': 'multipart/form-data',
-                     Authorization: `Bearer ${token}` 
+                     'Content-Type': 'multipart/form-data'
                    }
                 });
                 localStorage.setItem('user', JSON.stringify(res.data.user));
-                window.location.reload();
+                login(res.data.user);
              } catch(err) {
                 alert('Failed to upload avatar: ' + (err.response?.data?.error || err.message));
              }
@@ -615,6 +617,10 @@ function SpamDetector() {
             </div>
           )}
 
+              {explanation && result !== "Error" && (
+                <PredictionExplanation explanation={explanation} result={result} />
+              )}
+
               {result && result !== "Error" && type !== "url" && (
                 <FeedbackWidget
                   key={`${text}|${result}|${confidence}`}
@@ -629,6 +635,7 @@ function SpamDetector() {
                   setText("");
                   setResult("");
                   setConfidence(null);
+                  setExplanation(null);
                   setType("message");
                 }}
                 className={`mt-4 w-full py-3.5 rounded-xl font-bold shadow-sm transition-all ${
