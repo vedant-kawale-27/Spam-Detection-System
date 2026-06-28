@@ -801,6 +801,6 @@ Powered by Spam Detection System`;
       <Chatbot />
     </div>
   );
-  )
+}
   
 export default App;
