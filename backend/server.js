@@ -911,7 +911,7 @@ async function applyRulesToEmails(userId, emails) {
     return { emails: emails || [], spamCount: 0, safeCount: 0 };
   }
   
-  const rules = await Rule.find({ user: userId });
+  const rules = await Rule.find({ user: userId }).limit(1000).lean();
   
   let spamCount = 0;
   let safeCount = 0;
