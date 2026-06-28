@@ -18,4 +18,13 @@ const registerLimiter = rateLimit({
   }
 });
 
-module.exports = { loginLimiter, registerLimiter };
+const resetLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    message: "Too many password reset requests. Please try again later."
+  }
+});
+
+module.exports = { loginLimiter, registerLimiter, resetLimiter };

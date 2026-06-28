@@ -3,7 +3,7 @@ const router = express.Router();
 const { body } = require('express-validator');
 const { register, login, getMe, googleLogin, updateAvatar, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
-const { registerLimiter, loginLimiter } = require('../middleware/rateLimiter');
+const { registerLimiter, loginLimiter, resetLimiter } = require('../middleware/rateLimiter');
 const multer = require('multer');
 const path = require('path');
 
@@ -45,7 +45,7 @@ const resetPasswordValidation = [
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ];
 
-router.post('/forgot-password', forgotPasswordValidation, forgotPassword);
-router.post('/reset-password/:id/:token', resetPasswordValidation, resetPassword);
+router.post('/forgot-password', resetLimiter, forgotPasswordValidation, forgotPassword);
+router.post('/reset-password/:id/:token', resetLimiter, resetPasswordValidation, resetPassword);
 
 module.exports = router;
