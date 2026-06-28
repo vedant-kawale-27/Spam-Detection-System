@@ -16,6 +16,8 @@ from flask_cors import CORS
 import sys
 from filelock import FileLock
 import requests
+from routes.analytics import analytics_bp
+from routes.analytics import record_scan
 
 # Try to import NLTK for stopwords (optional)
 try:
@@ -115,6 +117,7 @@ app.label_encoder = label_encoder
 
 from bulk_predict import bulk_predict_bp
 app.register_blueprint(bulk_predict_bp)
+app.register_blueprint(analytics_bp)
 
 url_model = joblib.load(URL_MODEL_PATH)
 url_vectorizer = joblib.load(URL_VECTORIZER_PATH)
@@ -199,6 +202,12 @@ def predict():
                     f"characters (got {len(text)})"
                 )
             }), 400
+        if final_output == "spam":
+            words = extract_words(text)
+            for word in words:
+                spam_words_storage[word] = spam_words_storage.get(word, 0) + 1
+
+        record_scan(text, final_output, input_type)
 
         # Translate incoming text to English if it is not in English
         original_text = text

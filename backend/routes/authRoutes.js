@@ -31,7 +31,7 @@ const loginValidation = [
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
-router.post('/', loginValidation,loginLimiter, login);
+router.post('/login', loginValidation,loginLimiter, login);
 router.post('/register', registerValidation,registerLimiter, register);
 router.post('/google', loginLimiter, googleLogin);
 router.get('/me', protect, getMe);

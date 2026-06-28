@@ -17,7 +17,7 @@ import { useTheme } from "../context/ThemeContext";
 import api from "../utils/axiosInstance";
 import Footer from "../components/Footer";
 
-const API_BASE = import.meta.env.VITE_API_URI || "";
+const API_BASE = import.meta.env.VITE_PYTHON_URI || "http://127.0.0.1:5000";
 
 // Known verdict labels the ML API can return (text -> ham/spam/smishing, url -> safe/malicious).
 const LABEL_COLORS = {

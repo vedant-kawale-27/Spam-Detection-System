@@ -13,7 +13,7 @@ export default function Footer() {
 
   return (
     <footer
-      className={`w-full mt-4 p-6 sm:p-8 text-center transition-all duration-500 ${
+      className={`w-screen mt-4 p-6 sm:p-8 text-center transition-all duration-500 ${
     isDark ? activeTheme.cardDark : `${activeTheme.card} backdrop-blur-md`
   }`}
     >

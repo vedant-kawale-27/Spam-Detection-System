@@ -160,7 +160,7 @@ if(process.env.NODE_ENV === 'development'){
 connectWithRetry();
 
 const corsOptions = {
-  origin: config.corsOrigins,
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
 };
 app.use(cors(corsOptions));

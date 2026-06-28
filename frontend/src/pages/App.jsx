@@ -1,11 +1,10 @@
-// Force rebuild - trigger CI
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import api from "../utils/axiosInstance";
 import "../App.css";
 import FeatureImportance from "../components/FeatureImportance";
-
+import PredictionExplanation from "../components/PredictionExplanation";
 import History from "../components/History";
 import WordCloud from "../components/WordCloud";
 import FeedbackWidget from "../components/FeedbackWidget";
@@ -21,11 +20,12 @@ import InstallAppButton from "../components/InstallAppButton";
 import { useNavigate } from "react-router-dom";
 import RulesManager from "../components/RulesManager";
 
-function SpamDetector() {
+function App() {
   const navigate = useNavigate();
   const [text, setText] = useState("");
   const [result, setResult] = useState("");
   const [confidence, setConfidence] = useState(null);
+  const [explanation, setExplanation] = useState(null); 
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState("message");
   const [copied, setCopied] = useState(false);
@@ -41,15 +41,6 @@ function SpamDetector() {
     if (trimmed.length < 160 && !trimmed.includes('\n')) return 'sms';
     return 'message';
   };
-  if (!text || text.trim().length === 0) return 'message';
-  const trimmed = text.trim();
-  if (trimmed.includes('http://') || trimmed.includes('https://')) return 'url';
-  if (trimmed.includes('@') && trimmed.includes('.')) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (emailRegex.test(trimmed)) return 'email';
-  }
-  if (trimmed.length < 160 && !trimmed.includes('\n')) return 'sms';
-  return 'message';
 
 
   const [darkMode, setDarkMode] = useState(false);
@@ -83,27 +74,27 @@ function SpamDetector() {
     THEME_PALETTES,
   } = useTheme();
 
-  const handlePredict = async () => {
-    if (!text || text.trim().length === 0) return;
-    try {
-      setLoading(true);
-      const res = await api.post(`${import.meta.env.VITE_API_URI}/predict`, {
-        text: text,
-        type: type,
-      });
-      setResult(res.data.prediction);
-      setConfidence(res.data.confidence ?? null);
-    } catch {
-      setExplanation(res.data.explanation ?? null);
-      setResult("Error");
-    }
-    // catch (error) {
-    //   setResult("Error");
-    // }
-     finally {
-      setLoading(false);
-    }
-  };
+const handlePredict = async () => {
+  if (!text || text.trim().length === 0) return;
+  try {
+    setLoading(true);
+    const res = await api.post(`${import.meta.env.VITE_API_URI}/predict`, {
+      text: text,
+      type: type,
+    });
+    setResult(res.data.prediction);
+    setConfidence(res.data.confidence ?? null);
+    setExplanation(res.data.explanation ?? null);
+  } catch (err) {
+    console.error("Predict error:", err);
+    setResult("Error");
+    setExplanation(null); 
+    setConfidence(null);
+    setExplanation(null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const confidencePct =
     confidence !== null
@@ -122,11 +113,9 @@ function SpamDetector() {
     >
       {/* Top Controls */}
       <div className="absolute top-4 right-4 flex gap-3 flex-wrap justify-end">
-        <button
+        {/* <button
           onClick={() => setThemeMode(isDark ? 'light' : 'dark')}
-          // onClick={() => {
-          //   setThemeMode(isDark ? 'light' : 'dark');
-          // }}
+          
           className="px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-2 shadow-md"
           style={{
             background: isDark ? '#fbbf24' : '#1e293b',
@@ -136,7 +125,7 @@ function SpamDetector() {
           }}
         >
           {isDark ? '☀️' : '🌙'}
-        </button>
+        </button> */}
         <InstallAppButton />
         <button
           onClick={() => setShowSettings(!showSettings)}
@@ -756,4 +745,4 @@ Powered by Spam Detection System`;
 
 
 
-export default SpamDetector;
+export default App;
