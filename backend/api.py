@@ -149,9 +149,21 @@ def predict():
         detected_language = "en"
         translated = False
         
+        # Reject whitespace-only input before it reaches the model: a blank
+        # string would otherwise be vectorized to an arbitrary, meaningless
+        # label. (Missing/empty text is already handled by the check above.)
+        if isinstance(text, str) and not text.strip():
+            return jsonify({"error": "No text provided"}), 400
+
         if input_type != "url" and text.strip():
             try:
-                from langdetect import detect
+                from langdetect import detect, DetectorFactory
+                # langdetect is non-deterministic by default: the same text can
+                # be detected as different languages across calls, which would
+                # translate (or not) inconsistently and flip the final label.
+                # A fixed seed makes detection — and thus the prediction —
+                # reproducible for identical input.
+                DetectorFactory.seed = 0
                 detected_language = detect(text)
             except Exception:
                 detected_language = "en"
