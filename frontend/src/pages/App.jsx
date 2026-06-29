@@ -581,6 +581,8 @@ function App() {
                   {loading ? "Analyzing..." : `Analyze ${type === "url" ? "URL" : type}`}
                 </button>
 
+               {/* Results Section */}
+                {result && (
                 {/* Error Section */}
                 {result === "Error" && errorInfo && (
                   <div
@@ -638,26 +640,9 @@ function App() {
                     <div className="flex justify-between items-center mb-5">
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-bold">📊 Analysis Result</h2>
-                        <button
-                          onClick={() => {
-                            const scoreStr = confidence !== null ? ` | Confidence: ${confidencePct}%` : "";
-                            const copyText = `Prediction: ${result === 'ham' || result === 'safe' ? 'Safe' : result === 'spam' || result === 'malicious' ? 'Spam/Malicious' : result === 'smishing' ? 'Fraud' : result}${scoreStr}`;
-                            navigator.clipboard.writeText(copyText);
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 2000);
-                          }}
-                          className={`ml-1 w-7 h-7 flex items-center justify-center rounded-full transition-all text-[11px] ${
-                            isDark ? "hover:bg-slate-700 bg-slate-800 text-slate-300" : "hover:bg-slate-200 bg-slate-100 text-slate-600"
-                          }`}
-                          title="Copy Result to Clipboard"
-                        >
-                          {copied ? "✅" : "📋"}
-                        </button>
                       </div>
-
-                      {/* Badge */}
                       <span
-                        className={`px-4 py-2 rounded-full text-sm font-bold ${
+                        className={`px-4 py-2 rounded-full text-sm font-bold shadow-sm ${
                           result === "ham" || result === "safe"
                             ? "bg-green-500 text-white"
                             : result === "spam" || result === "malicious"
@@ -676,82 +661,20 @@ function App() {
                       </span>
                     </div>
 
-                    {/* Confidence */}
-                    {confidence !== null && result !== "Error" && (
-                      <>
-                        <p className="text-sm opacity-70 mb-1">Confidence Score</p>
-                        <h3 className="text-3xl font-bold mb-4">{confidencePct}%</h3>
-                        <div className={`w-full rounded-full h-3 mb-5 ${isDark ? "bg-slate-700" : "bg-slate-200"}`} />
-                      </>
-                    )}
+                    <p className="text-sm opacity-80 leading-relaxed text-left font-medium">
+                      {(result === "spam" || result === "smishing" || result === "malicious") &&
+                        "This content contains characteristics commonly found in spam, phishing, or malicious attacks."}
+                      {(result === "ham" || result === "safe") &&
+                        "No suspicious patterns were detected in this content."}
+                    </p>
 
-                    {result && confidence !== null && result !== "Error" && (
-                      <div className="mt-4 text-left">
-                        <p className="text-xs font-semibold mb-1 opacity-70">
-                          Model Confidence: {confidencePct}%
-                        </p>
-                        <div className={`w-full rounded-full h-2 ${isDark ? "bg-slate-800" : "bg-slate-200"}`}>
-                          <div
-                            className={`h-3 rounded-full transition-all duration-500 ${
-                              result === "ham" || result === "safe"
-                                ? "bg-green-500"
-                                : result === "spam" || result === "malicious"
-                                  ? "bg-red-500"
-                                  : "bg-orange-500"
-                            }`}
-                            style={{ width: `${confidencePct}%` }}
-                          />
-                        </div>
-
-                        <div className="mb-5">
-                          <p className="text-sm opacity-70 mb-2">Risk Level</p>
-                          <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                            riskLevel === "Low"
-                              ? "bg-green-100 text-green-700"
-                              : riskLevel === "Medium"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-red-100 text-red-700"
-                          }`}>
-                            {riskLevel === "Low" && "🟢 Low"}
-                            {riskLevel === "Medium" && "🟠 Medium"}
-                            {riskLevel === "High" && "🔴 High"}
-                          </span>
-                        </div>
-
-                        <div className="mt-4 mb-4">
-                          <button
-                            onClick={() => {
-                              const fullReport = `
-        📊 Spam Detection Report
-        ─────────────────────
-        🔍 Prediction: ${result === 'ham' || result === 'safe' ? '✅ Safe' : result === 'spam' || result === 'malicious' ? '🚫 Spam/Malicious' : result === 'smishing' ? '⚠️ Fraud' : '⚠️ Error'}
-        📝 Message: ${text}
-        📈 Confidence: ${confidence ? confidencePct + '%' : 'N/A'}
-        ⚠️ Risk Level: ${riskLevel}
-        📅 Date: ${new Date().toLocaleString()}
-         ─────────────────────
-        Powered by Spam Detection System`;
-                              navigator.clipboard.writeText(fullReport);
-                              setCopied(true);
-                              setTimeout(() => setCopied(false), 2000);
-                            }}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 w-full justify-center ${
-                              isDark
-                                ? "bg-slate-700 hover:bg-slate-600 text-slate-200"
-                                : "bg-slate-200 hover:bg-slate-300 text-slate-700"
-                            }`}
-                          >
-                            {copied ? '✅ Copied!' : '📋 Copy Full Report'}
-                          </button>
-                        </div>
-
-                        <p className="text-sm opacity-75 leading-relaxed">
-                          {(result === "spam" || result === "smishing" || result === "malicious") &&
-                            "This content contains characteristics commonly found in spam, phishing, or malicious attacks."}
-                          {(result === "ham" || result === "safe") &&
-                            "No suspicious patterns were detected in this content."}
-                        </p>
-                      </div>
+                    {/* Modular XAI Component Rendering */}
+                    {explanation && result !== "Error" && (
+                      <PredictionExplanation 
+                        explanation={explanation} 
+                        result={result} 
+                        confidencePct={confidencePct} 
+                      />
                     )}
                     <div className="mt-4 text-left">
                      <p className="text-xs font-semibold mb-1 opacity-70">
@@ -871,6 +794,7 @@ Powered by Spam Detection System`;
                     setText("");
                     setResult("");
                     setConfidence(null);
+                    setExplanation(null);
                     setErrorInfo(null);
                     setType("message");
                   }}
