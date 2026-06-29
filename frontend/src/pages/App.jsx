@@ -916,4 +916,5 @@ Powered by Spam Detection System`;
     </div>
   );
 }
-export default SpamDetector;
+  
+export default App;
