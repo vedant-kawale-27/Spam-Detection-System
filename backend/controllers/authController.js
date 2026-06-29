@@ -128,12 +128,23 @@ const googleLogin = async (req, res) => {
     } else {
       let baseUsername = name ? name.replace(/\s+/g, '').toLowerCase() : email.split('@')[0];
       let username = baseUsername;
-      let userExists = await User.findOne({ username });
-      let counter = 1;
-      while (userExists) {
-        username = `${baseUsername}${counter}`;
-        userExists = await User.findOne({ username });
-        counter++;
+      
+      const regex = new RegExp(`^${baseUsername}(\\d*)$`);
+      const existingUsers = await User.find({ username: regex }).select('username').lean();
+      
+      if (existingUsers.length > 0) {
+        const exactMatch = existingUsers.find(u => u.username === baseUsername);
+        if (exactMatch) {
+          let maxCounter = 0;
+          existingUsers.forEach(u => {
+            const match = u.username.match(regex);
+            if (match && match[1]) {
+              const num = parseInt(match[1]);
+              if (num > maxCounter) maxCounter = num;
+            }
+          });
+          username = `${baseUsername}${maxCounter + 1}`;
+        }
       }
 
       user = await User.create({
