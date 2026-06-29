@@ -31,23 +31,22 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState("message");
   const [hasCelebrated, setHasCelebrated] = useState(() => {
-    return localStorage.getItem('firstPrediction') === 'true';
-});
+    return localStorage.getItem("firstPrediction") === "true";
+  });
   const [showCelebration, setShowCelebration] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const detectType = (text) => {
-    if (!text || text.trim().length === 0) return 'message';
+    if (!text || text.trim().length === 0) return "message";
     const trimmed = text.trim();
-    if (trimmed.includes('http://') || trimmed.includes('https://')) return 'url';
-    if (trimmed.includes('@') && trimmed.includes('.')) {
+    if (trimmed.includes("http://") || trimmed.includes("https://")) return "url";
+    if (trimmed.includes("@") && trimmed.includes(".")) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (emailRegex.test(trimmed)) return 'email';
+      if (emailRegex.test(trimmed)) return "email";
     }
-    if (trimmed.length < 160 && !trimmed.includes('\n')) return 'sms';
-    return 'message';
+    if (trimmed.length < 160 && !trimmed.includes("\n")) return "sms";
+    return "message";
   };
-
 
   const [darkMode, setDarkMode] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -63,7 +62,54 @@ function App() {
     return "detector";
   });
 
-  const { user, logout } = useAuth();
+  // ==== SOUND EFFECTS ====
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  const playSpamSound = () => {
+    if (!soundEnabled) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // Alert sound - two quick beeps
+      [0, 0.15].forEach((delay) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 600;
+        osc.type = "square";
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.15);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.15);
+      });
+    } catch (e) {
+      /* silent fail */
+    }
+  };
+
+  const playHamSound = () => {
+    if(!soundEnabled) return;
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Success sound - pleasant ascending tone
+        [523, 659, 784].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value=freq;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.2,ctx.currentTime + i * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.15);
+            osc.start(ctx.currentTime + i * 0.12);
+            osc.stop(ctx.currentTime + i * 0.12 + 0.15);
+        });
+      }  catch (e)  { /* silent fail */ }
+  };
+      
+   
+
+  const { user, login, logout } = useAuth();
   const handleLogout = () => {
     logout();
     localStorage.removeItem("user");
@@ -103,6 +149,14 @@ function App() {
       setLoading(false);
     }
   };
+
+  if (result === 'spam' || result === 'malicious') {
+    playSpamSound();
+} else if (result === 'ham' || result === 'safe') {
+    playHamSound();
+}
+
+
 
   const triggerConfetti = () => {
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -165,6 +219,19 @@ function App() {
           Logout
         </button>
       </div>
+
+      <button
+        onClick={() => setSoundEnabled(!soundEnabled)}
+        className="px-4 py-2.5 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-2 shadow-md"
+        style={{
+          background: isDark ? '#1e293b' : '#e2e8f0',
+          color: isDark ? '#e4e4e4' : '#1e293b',
+          border: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        {soundEnabled ? '🔊' : '🔇'}
+      </button>
 
       <div className="absolute top-4 left-4 flex items-center gap-3">
         <label className="cursor-pointer relative group">
